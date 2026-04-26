@@ -8,28 +8,36 @@ let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
 
-// ✅ REGISTER
+/**
+ * Register a new user
+ * Validates input and ensures username is unique
+ */
 public_users.post("/register", (req, res) => {
   const { username, password } = req.body;
 
+  // Validate input
   if (!username || !password) {
     return res.status(400).json({ message: "Username and password required" });
   }
 
+  // Check if user already exists
   if (!isValid(username)) {
     return res.status(409).json({ message: "User already exists" });
   }
 
+  // Add new user
   users.push({ username, password });
 
   return res.status(200).json({ message: "User registered successfully" });
 });
 
 
-// ✅ GET ALL BOOKS (ASYNC)
+/**
+ * Get all books
+ * Uses Axios to simulate asynchronous data retrieval
+ */
 public_users.get('/', async (req, res) => {
   try {
-    // simulate async using axios
     const response = await axios.get('http://localhost:5000/');
     return res.status(200).json(response.data);
   } catch (error) {
@@ -38,7 +46,9 @@ public_users.get('/', async (req, res) => {
 });
 
 
-// ✅ GET BOOK BY ISBN
+/**
+ * Get book details by ISBN
+ */
 public_users.get('/isbn/:isbn', async (req, res) => {
   const isbn = req.params.isbn;
 
@@ -58,7 +68,10 @@ public_users.get('/isbn/:isbn', async (req, res) => {
 });
 
 
-// ✅ GET BOOKS BY AUTHOR
+/**
+ * Get books by author name
+ * Case-insensitive filtering
+ */
 public_users.get('/author/:author', async (req, res) => {
   const author = req.params.author;
 
@@ -82,7 +95,10 @@ public_users.get('/author/:author', async (req, res) => {
 });
 
 
-// ✅ GET BOOKS BY TITLE
+/**
+ * Get books by title
+ * Case-insensitive filtering
+ */
 public_users.get('/title/:title', async (req, res) => {
   const title = req.params.title;
 
@@ -106,7 +122,10 @@ public_users.get('/title/:title', async (req, res) => {
 });
 
 
-// ✅ GET BOOK REVIEWS
+/**
+ * Get reviews for a specific book
+ * Handles empty review cases clearly
+ */
 public_users.get('/review/:isbn', async (req, res) => {
   const isbn = req.params.isbn;
 
@@ -114,11 +133,21 @@ public_users.get('/review/:isbn', async (req, res) => {
     const response = await axios.get('http://localhost:5000/');
     const books = response.data;
 
-    if (books[isbn]) {
-      return res.status(200).json(books[isbn].reviews);
+    if (!books[isbn]) {
+      return res.status(404).json({ message: "Book not found" });
     }
 
-    return res.status(404).json({ message: "Book not found" });
+    const reviews = books[isbn].reviews;
+
+    if (!reviews || Object.keys(reviews).length === 0) {
+      return res.status(200).json({
+        message: "No reviews found for this book"
+      });
+    }
+
+    return res.status(200).json({
+      reviews: reviews
+    });
 
   } catch (error) {
     return res.status(500).json({ message: "Error fetching reviews" });
@@ -127,4 +156,3 @@ public_users.get('/review/:isbn', async (req, res) => {
 
 
 module.exports.general = public_users;
-
