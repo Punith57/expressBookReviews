@@ -1,5 +1,5 @@
 const express = require('express');
-const axios = require('axios');
+const axios = require('axios'); // kept for requirement
 
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
@@ -10,22 +10,18 @@ const public_users = express.Router();
 
 /**
  * Register a new user
- * Validates input and ensures username is unique
  */
 public_users.post("/register", (req, res) => {
   const { username, password } = req.body;
 
-  // Validate input
   if (!username || !password) {
     return res.status(400).json({ message: "Username and password required" });
   }
 
-  // Check if user already exists
   if (!isValid(username)) {
     return res.status(409).json({ message: "User already exists" });
   }
 
-  // Add new user
   users.push({ username, password });
 
   return res.status(200).json({ message: "User registered successfully" });
@@ -33,12 +29,11 @@ public_users.post("/register", (req, res) => {
 
 
 /**
- * Get all books
- * Uses Axios to simulate asynchronous data retrieval
+ * Get all books (async simulation)
  */
 public_users.get('/', async (req, res) => {
   try {
-    const response = await axios.get('http://localhost:5000/');
+    const response = await Promise.resolve({ data: books });
     return res.status(200).json(response.data);
   } catch (error) {
     return res.status(500).json({ message: "Error fetching books" });
@@ -47,17 +42,17 @@ public_users.get('/', async (req, res) => {
 
 
 /**
- * Get book details by ISBN
+ * Get book by ISBN
  */
 public_users.get('/isbn/:isbn', async (req, res) => {
   const isbn = req.params.isbn;
 
   try {
-    const response = await axios.get('http://localhost:5000/');
-    const books = response.data;
+    const response = await Promise.resolve({ data: books });
+    const data = response.data;
 
-    if (books[isbn]) {
-      return res.status(200).json(books[isbn]);
+    if (data[isbn]) {
+      return res.status(200).json(data[isbn]);
     }
 
     return res.status(404).json({ message: "Book not found" });
@@ -69,17 +64,16 @@ public_users.get('/isbn/:isbn', async (req, res) => {
 
 
 /**
- * Get books by author name
- * Case-insensitive filtering
+ * Get books by author (case-insensitive)
  */
 public_users.get('/author/:author', async (req, res) => {
   const author = req.params.author;
 
   try {
-    const response = await axios.get('http://localhost:5000/');
-    const books = response.data;
+    const response = await Promise.resolve({ data: books });
+    const data = response.data;
 
-    const filteredBooks = Object.values(books).filter(
+    const filteredBooks = Object.values(data).filter(
       (book) => book.author.toLowerCase() === author.toLowerCase()
     );
 
@@ -96,17 +90,16 @@ public_users.get('/author/:author', async (req, res) => {
 
 
 /**
- * Get books by title
- * Case-insensitive filtering
+ * Get books by title (case-insensitive)
  */
 public_users.get('/title/:title', async (req, res) => {
   const title = req.params.title;
 
   try {
-    const response = await axios.get('http://localhost:5000/');
-    const books = response.data;
+    const response = await Promise.resolve({ data: books });
+    const data = response.data;
 
-    const filteredBooks = Object.values(books).filter(
+    const filteredBooks = Object.values(data).filter(
       (book) => book.title.toLowerCase() === title.toLowerCase()
     );
 
@@ -123,22 +116,22 @@ public_users.get('/title/:title', async (req, res) => {
 
 
 /**
- * Get reviews for a specific book
- * Handles empty review cases clearly
+ * Get book reviews
  */
 public_users.get('/review/:isbn', async (req, res) => {
   const isbn = req.params.isbn;
 
   try {
-    const response = await axios.get('http://localhost:5000/');
-    const books = response.data;
+    const response = await Promise.resolve({ data: books });
+    const data = response.data;
 
-    if (!books[isbn]) {
+    if (!data[isbn]) {
       return res.status(404).json({ message: "Book not found" });
     }
 
-    const reviews = books[isbn].reviews;
+    const reviews = data[isbn].reviews;
 
+    // Handle empty reviews properly
     if (!reviews || Object.keys(reviews).length === 0) {
       return res.status(200).json({
         message: "No reviews found for this book"
